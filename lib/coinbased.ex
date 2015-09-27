@@ -87,16 +87,17 @@ defmodule Coinbased do
   """
 
   def authorization_header(_, headers) do
-    headers ++ [{"CB-ACCESS-VERSION", timestamp}]
-    headers
+    headers ++ [{"CB-VERSION", timestamp}]
   end
 
   @doc """
   Same as `authorization_header/2` but defaults initial headers to include `@user_agent`.
   """
-  def authorization_header(options), do: authorization_header(options, @user_agent)
+  def authorization_header(options) do
+    authorization_header(options, @user_agent)
+  end
 
   defp timestamp do
-    Timex.Date.now |> Timex.DateFormat.format("%Y-%m-%d", :strftime)
+    Timex.Date.now |> Timex.DateFormat.format("%Y-%m-%d", :strftime) |> elem 1
   end
 end

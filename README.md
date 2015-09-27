@@ -31,30 +31,21 @@ Fetch the most recent buy price
 
 ```
 iex> Coinbased.Prices.buy
-%{"data" => %{"amount" => "232.50", "currency" => "USD"},
-  "warnings" => [%{"id" => "missing_version",
-     "message" => "Please supply API version (YYYY-MM-DD) as CB-VERSION header",
-     "url" => "https://developers.coinbase.com/api#versioning"}]}
+%{"data" => %{"amount" => "232.43", "currency" => "USD"}}
 ```
 
 Fetch the most recent sell price
 
 ```
 iex> Coinbased.Prices.sell
-%{"data" => %{"amount" => "237.40", "currency" => "USD"},
-  "warnings" => [%{"id" => "missing_version",
-     "message" => "Please supply API version (YYYY-MM-DD) as CB-VERSION header",
-     "url" => "https://developers.coinbase.com/api#versioning"}]}
+%{"data" => %{"amount" => "237.24", "currency" => "USD"}}
 ```
 
 Fetch the most recent spot price
 
 ```
 iex> Coinbased.Prices.spot
-%{"data" => %{"amount" => "234.67", "currency" => "USD"},
-  "warnings" => [%{"id" => "missing_version",
-     "message" => "Please supply API version (YYYY-MM-DD) as CB-VERSION header",
-     "url" => "https://developers.coinbase.com/api#versioning"}]}
+%{"data" => %{"amount" => "234.78", "currency" => "USD"}}
 ```
 
 ## Contributing
