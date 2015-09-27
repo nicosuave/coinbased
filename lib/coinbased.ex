@@ -31,7 +31,7 @@ defmodule Coinbased do
   @spec process_response(HTTPoison.Response.t) :: response
   def process_response(response) do
     status_code = response.status_code
-    headers = response.headers
+    _headers = response.headers
     body = response.body
     response = unless body == "", do: body |> JSX.decode!,
     else: nil
@@ -41,29 +41,29 @@ defmodule Coinbased do
   end
 
   def delete(path, client, body \\ "") do
-    _request(:delete, url(client, path), client.auth, body)
+    _request(:delete, path, client, body)
   end
 
   def post(path, client, body \\ "") do
-    _request(:post, url(client, path), client.auth, body)
+    _request(:post, path, client, body)
   end
 
   def patch(path, client, body \\ "") do
-    _request(:patch, url(client, path), client.auth, body)
+    _request(:patch, path, client, body)
   end
 
   def put(path, client, body \\ "") do
-    _request(:put, url(client, path), client.auth, body)
+    _request(:put, path, client, body)
   end
 
+  # TODO: Fix encoding of query params
   def get(path, client, params \\ []) do
-    url = url(client, path)
-    url = <<url :: binary, build_qs(params) :: binary>>
-    _request(:get, url, client.auth)
+    path_with_query_params = << path :: binary, build_qs(params) :: binary>>
+    _request(:get, path_with_query_params, client)
   end
 
-  def _request(method, url, auth, body \\ "") do
-    json_request(method, url, body, authorization_header(auth, @user_agent))
+  def _request(method, path, client, body \\ "") do
+    json_request(method, url(client, path), body, authorization_header(client.auth, %{method: method, request_path: path, body: body}, @user_agent))
   end
 
   def json_request(method, url, body \\ "", headers \\ [], options \\ []) do
@@ -71,7 +71,7 @@ defmodule Coinbased do
   end
 
   @spec url(client :: Client.t, path :: binary) :: binary
-  defp url(client = %Client{endpoint: endpoint}, path) do
+  defp url(_client = %Client{endpoint: endpoint}, path) do
     endpoint <> path
   end
 
@@ -80,24 +80,50 @@ defmodule Coinbased do
   defp build_qs(kvs), do: to_string('?' ++ URI.encode_query(kvs))
 
   @doc """
-    Authentication is soon to be supported via your Coinbase API key & secret
+    Authentication is supported via your Coinbase API key & secret
 
   ## More info
   https:\\developers.coinbase.com/api/v2#authentication
   """
 
-  def authorization_header(_, headers) do
-    headers ++ [{"CB-VERSION", timestamp}]
+  def authorization_header(%{api_key: api_key, secret_key: secret_key}, %{method: method, request_path: request_path, body: body}, headers) do
+    timestamp = seconds_since_epoch
+    signature = sign(%{timestamp: timestamp, method: method, request_path: request_path, body: body, secret_key: secret_key})
+    headers_to_be_added = [
+      {"CB-ACCESS-KEY", api_key},
+      {"CB-ACCESS-TIMESTAMP", timestamp},
+      {"CB-ACCESS-SIGN", signature},
+      {"CB-VERSION", formatted_date}
+    ]
+    headers ++ headers_to_be_added
+  end
+
+  def authorization_header(_, _request_metadata, headers) do
+    headers ++ [{"CB-VERSION", formatted_date}]
   end
 
   @doc """
   Same as `authorization_header/2` but defaults initial headers to include `@user_agent`.
   """
   def authorization_header(options) do
-    authorization_header(options, @user_agent)
+    authorization_header(options, nil, @user_agent)
   end
 
-  defp timestamp do
+  defp sign(%{timestamp: timestamp, method: method, request_path: request_path, body: body, secret_key: secret_key}) do
+    method = "#{method}" |> String.upcase
+    # TODO: Figure out why this isn't working
+    prehash_string = "#{timestamp}#{method}/v2/#{request_path}#{body}"
+    IO.puts "PREHASH STRING: #{prehash_string}"
+    signature = :crypto.hmac(:sha256, secret_key, prehash_string) |> Base.encode16 |> String.downcase
+    IO.puts "SIGNATURE: #{signature}"
+    signature
+  end
+
+  defp seconds_since_epoch do
+    Timex.Date.now |> Timex.Date.to_secs
+  end
+
+  defp formatted_date do
     Timex.Date.now |> Timex.DateFormat.format("%Y-%m-%d", :strftime) |> elem 1
   end
 end
