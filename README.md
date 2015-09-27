@@ -1,7 +1,7 @@
 Coinbased
 =========
 
-A simple Elixir wrapper for [Coinbase's v2 Wallet API](https://developers.coinbase.com/api/v2).
+A simple Elixir wrapper for [Coinbase's v2 Wallet API](https://developers.coinbase.com/api/v2). This project is very much a work in progress at this point. It's actually my first foray into Elixir, so any critique is very much welcomed! :neckbeard:
 
 Inspiration came from from the wonderful [Tentacat](https://github.com/edgurgel/tentacat) by [Eduardo Gurgel](https://github.com/edgurgel).
 
